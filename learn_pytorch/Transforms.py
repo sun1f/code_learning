@@ -14,7 +14,6 @@ cv_img = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
 
 writer = SummaryWriter("logs")
 
-
 tensor_trans = transforms.ToTensor()  # 相当于从transform工具箱拿一个tool出来
 tensor_img = tensor_trans(img)  # 参数必须是两种类型之一：pic (PIL Image or numpy.ndarray): Image to be converted to tensor.
 # print(tensor_img)
@@ -25,4 +24,3 @@ writer.add_image("Tensor_img", tensor_img, 1)
 writer.add_image("Tensor_img", tensor_img_cv, 2)
 
 writer.close()
-
