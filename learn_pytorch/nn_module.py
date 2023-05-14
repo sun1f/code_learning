@@ -3,6 +3,7 @@ from torch import nn
 
 class ELL(nn.Module):
     def __init__(self):
+        # super().__init__()是调用基类的构造函数
         super().__init__()
 
     def forward(self, input):
