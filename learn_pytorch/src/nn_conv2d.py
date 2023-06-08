@@ -21,7 +21,7 @@ class ELL(nn.Module):
 ell = ELL()
 # print(ell)
 
-writer = SummaryWriter("logs")
+writer = SummaryWriter("../logs")
 
 step = 0
 for data in dataloader:

@@ -12,7 +12,7 @@ img, target = test_data[0]
 print(img.shape)
 print(target)
 
-writer = SummaryWriter("dataloader")
+writer = SummaryWriter("../dataloader")
 for epoch in range(3):
     step = 0
     for data in test_loader:

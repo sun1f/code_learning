@@ -2,8 +2,8 @@ from PIL import Image
 from torch.utils.tensorboard import SummaryWriter
 from torchvision import transforms
 
-writer = SummaryWriter("logs")
-img = Image.open("image/messi.jpg")
+writer = SummaryWriter("../logs")
+img = Image.open("../image/messi.jpg")
 print(img)
 
 # ToTensor

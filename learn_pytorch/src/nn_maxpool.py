@@ -27,7 +27,7 @@ class ELL(nn.Module):
         return output
 
 ell = ELL()
-writer = SummaryWriter("logs")
+writer = SummaryWriter("../logs")
 # output = ell(input)
 # print(output)
 step = 0

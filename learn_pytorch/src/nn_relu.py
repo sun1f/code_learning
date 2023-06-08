@@ -19,7 +19,7 @@ class ELL(nn.Module):
 
 ell = ELL()
 
-writer = SummaryWriter("logs")
+writer = SummaryWriter("../logs")
 
 step = 0
 for data in dataloader:
