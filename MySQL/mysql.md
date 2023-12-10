@@ -311,9 +311,88 @@ ADD CONSTRAINT `FK_gradeid` FOREIGN KEY(`gradeid`) REFERENCES `grade`(`grade_id`
 
 ### 3.2 DML语言（全部记住）
 
+DML语言：数据操作语言
 
+- insert
+- update
+- delete
 
+#### 3.2.1 插入
 
+> -- 插入语法：INSERT INTO 表名 (字段名1, 字段名2,..., 字段名n) values (值1, 值2,..., 值n), (值1, 值2,..., 值n),..., (值1, 值2,..., 值n)
+
+```mysql
+-- 当不写表的字段时，会按顺序一一匹配，当字段设为自增或有默认值时，添加时可以省略不写
+-- 一般写插入语句时，要将字段与数据一一对应
+INSERT INTO `grade`(`grade_name`) VALUES('大四')
+INSERT INTO `grade`(grade_name) VALUES('大一'), ('大二'), ('大三')
+
+INSERT INTO `student` (`name`) VALUES('张三')
+INSERT INTO `student` (`name`, `pwd`, `sex`) VALUES ('李四', 'abcdef', '男')
+INSERT INTO `student` (`name`, `pwd`, `sex`) VALUES ('王五', '1234', '女'), ('赵六', '567', '男'), ('冯七', '8910', '女')
+```
+
+注意事项：
+
+- 英文逗号！
+- 字段可以省略，但是后面的值必须与表中的字段顺序一一对应
+- 可以同时插入多条数据，values后面的值需要使用英文逗号隔开，values(), (),..., ()
+
+#### 3.2.2 修改
+
+> 语法：UPDATE 表名 SET 字段名1 = 值1, 字段名2 = 值2,..., 字段名n = 值n WHERE [条件]
+
+```mysql
+-- 带where，指定修改位置
+UPDATE `student` SET `name` = 'sun1f' WHERE `id` = 1
+
+-- 不指定条件的情况下，会改动表中的全体数据
+UPDATE `student` SET `name` = 'sun1f'
+
+-- 修改多个属性，用英文逗号隔开
+UPDATE `student` SET `name` = 'syf', `email` = 'sun1f@foxmail.com' WHERE `id` = 1
+```
+
+**条件：**where子句会返回布尔值
+
+|        操作符        |     含义     |       示例       | 结果  |
+| :------------------: | :----------: | :--------------: | :---: |
+|          =           |     等于     |      5 = 6       | FALSE |
+|       <> 或 !=       |    不等于    |      5 <> 6      | FALSE |
+|          >           |              |                  |       |
+|          <           |              |                  |       |
+|          <=          |              |                  |       |
+|          >=          |              |                  |       |
+| BETWEEN ... AND .... | 在某个范围内 | BETWEEN 5 AND 2  |       |
+|         AND          |  相当于 &&   | 5 > 1 AND 1 > 2  | FALSE |
+|          OR          | 相当于 \|\|  | 5 > 1 \|\| 1 > 2 | TRUE  |
+
+```mysql
+-- 通过多个条件定位数据
+UPDATE `student` SET `name` = '长江7号' WHERE `name` = 'sun1f' AND `sex` = '女'
+
+-- value 可以是一个具体的值，也可以是一个变量，CURRENT_TIME 是当前时间
+UPDATE `student` SET `birthday` = CURRENT_TIME WHERE `name` = '长江7号' AND `sex` = '女'
+```
+
+#### 3.3.3 删除
+
+> 语法：DELETE FROM 表名 WHERE [条件]
+
+```mysql
+-- 删除数据（全部删除，避免这样写）
+DELETE FROM `student`
+
+-- 删除指定的数据
+DELETE FROM `student` WHERE `id` = 1
+```
+
+> TRUNCATE命令：完全清空一个数据库表，表的结构和索引约束不会变
+
+```mysql
+-- 清空 student 表
+TRUNCATE `student`
+```
 
 
 
