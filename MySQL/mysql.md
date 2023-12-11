@@ -394,6 +394,340 @@ DELETE FROM `student` WHERE `id` = 1
 TRUNCATE `student`
 ```
 
+**DELETE** 和 **TRUNCATE**都能删除数据，且不会影响表结构，区别是：
+
+- TRUNCATE会重新设置自增列，自增计数会归零
+- TRUNCATE不会影响事务
+
+```mysql
+-- 测试 DELETE 和 TRUNCATE 的区别
+CREATE TABLE `test` (
+   `id` INT(4) NOT NULL AUTO_INCREMENT,
+   `coll` VARCHAR(20) NOT NULL,
+   PRIMARY KEY(`id`)
+)ENGINE=INNODB DEFAULT CHARSET=utf8
+
+INSERT INTO `test` (`coll`) VALUES ('1'), ('2'), ('3')
+
+DELETE FROM `test` -- 不会影响自增计数
+
+TRUNCATE TABLE `test` -- 自增会归零
+```
+
+*了解：使用DELETE删除后，重启数据库时：
+
+- 在InnoDB引擎中，自增列会从1开始，因为其存在于内存中，断电即失
+- 在MyISAM中，将继续从上一个自增量开始，因为其存在于文件中，不会丢失
+
+## 4. DQL查询数据（最重点）
+
+DQL（Data Query Language）是数据查询语言
+
+- 所有的查询操作都用它 **SELECT**
+- 简单的查询、复杂的查询它都能做
+- **数据库中最核心的语言，最重要的语句**
+- 使用频率最高的语句
+
+> SELECT 完整语法
+
+```mysql
+SELECT
+	[ALL | DISTINCT | DISTINCTROW]
+		[HIGH_PRIORITY]
+		[STRAIGHT_JOIN]
+		[SQL_SMALL_RESULT] [SQL_BIG_RESULT] [SQL_BUFFER_RESULT]
+		[SQL_CACHE | SQL_NO_CACHE] [SQL_CALC_FOUND_ROWS]
+	select_expr [, select_expr ...]
+	[FROM table_references
+		[PARTITION partition_list]
+	[WHERE where_condition]
+	[GROUP BY {col_name | expr | position}
+    	[ASC | DESC], ... [WITH ROLLUP]]
+	[HAVING where_condition]
+	[ORDER BY {col_name | expr | position}
+		[ASC | DESC], ...]
+    [LIMIT {[offset,] row_count | row_count OFFSET offset}]
+    [PROCEDURE procedure_name(argument_list)]
+    [INTO OUTFILE 'file_name'
+		[CHARACTER SET charset_name]
+		export_options
+		| INTO DUMPFILE 'file_name'
+		| INTO var_name[, var_name]]
+    [FOR UPDATE | LOCK IN SHARE MODE]]
+```
 
 
- 
+
+### 4.1 数据准备
+
+1. 创建 school 数据库，创建 student 学生表
+
+```mysql
+create database if not exists `school`;
+-- 创建一个school数据库
+use `school`;-- 创建学生表
+drop table if exists `student`;
+create table `student`(
+	`studentno` int(4) not null comment '学号',
+    `loginpwd` varchar(20) default null,
+    `studentname` varchar(20) default null comment '学生姓名',
+    `sex` tinyint(1) default null comment '性别，0或1',
+    `gradeid` int(11) default null comment '年级编号',
+    `phone` varchar(50) not null comment '联系电话，允许为空',
+    `address` varchar(255) not null comment '地址，允许为空',
+    `borndate` datetime default null comment '出生时间',
+    `email` varchar (50) not null comment '邮箱账号允许为空',
+    `identitycard` varchar(18) default null comment '身份证号',
+    primary key (`studentno`),
+    unique key `identitycard`(`identitycard`),
+    key `email` (`email`)
+)engine=myisam default charset=utf8;
+```
+
+2. 创建 grade 年级表，创建 subject 科目表，创建 result 成绩表
+
+```mysql
+drop table if exists `grade`;
+create table `grade`(
+	`gradeid` int(11) not null auto_increment comment '年级编号',
+  `gradename` varchar(50) not null comment '年级名称',
+    primary key (`gradeid`)
+) engine=innodb auto_increment = 6 default charset = utf8;
+
+-- 创建科目表
+drop table if exists `subject`;
+create table `subject`(
+	`subjectno`int(11) not null auto_increment comment '课程编号',
+    `subjectname` varchar(50) default null comment '课程名称',
+    `classhour` int(4) default null comment '学时',
+    `gradeid` int(4) default null comment '年级编号',
+    primary key (`subjectno`)
+)engine = innodb auto_increment = 19 default charset = utf8;
+
+-- 创建成绩表
+drop table if exists `result`;
+create table `result`(
+	`studentno` int(4) not null comment '学号',
+    `subjectno` int(4) not null comment '课程编号',
+    `examdate` datetime not null comment '考试日期',
+    `studentresult` int (4) not null comment '考试成绩',
+    key `subjectno` (`subjectno`)
+)engine = innodb default charset = utf8;
+```
+
+3. 插入学生数据
+
+```mysql
+-- 插入学生数据
+insert into `student` (`studentno`,`loginpwd`,`studentname`,`sex`,`gradeid`,`phone`,`address`,`borndate`,`email`,`identitycard`)
+values
+(1000,'123456','张伟',0,2,'13800001234','北京朝阳','1980-1-1','text123@qq.com','123456198001011234'),
+(1001,'123456','赵强',1,3,'13800002222','广东深圳','1990-1-1','text111@qq.com','123456199001011233');
+```
+
+4. 插入年级数据
+
+```mysql
+-- 插入年级数据
+insert into `grade` (`gradeid`,`gradename`) values(1,'大一'),(2,'大二'),(3,'大三'),(4,'大四'),(5,'预科班');
+```
+
+5. 插入科目数据
+
+```mysql
+-- 插入科目数据
+insert into `subject`(`subjectno`,`subjectname`,`classhour`,`gradeid`)values
+(1,'高等数学-1',110,1),
+(2,'高等数学-2',110,2),
+(3,'高等数学-3',100,3),
+(4,'高等数学-4',130,4),
+(5,'C语言-1',110,1),
+(6,'C语言-2',110,2),
+(7,'C语言-3',100,3),
+(8,'C语言-4',130,4),
+(9,'Java程序设计-1',110,1),
+(10,'Java程序设计-2',110,2),
+(11,'Java程序设计-3',100,3),
+(12,'Java程序设计-4',130,4),
+(13,'数据库结构-1',110,1),
+(14,'数据库结构-2',110,2),
+(15,'数据库结构-3',100,3),
+(16,'数据库结构-4',130,4),
+(17,'C#基础',130,1);
+```
+
+
+
+5. 插入成绩数据
+
+```mysql
+-- 插入两个学生的成绩数据
+INSERT INTO `result`(`studentno`,`subjectno`,`examdate`,`studentresult`)
+VALUES
+(1000, 1, '2014-11-11 18:00:00', 90),
+(1000, 2, '2014-11-12 16:00:00', 71),
+(1000, 3, '2014-01-11 09:00:00', 62),
+(1000, 4, '2014-05-13 16:00:00', 78),
+(1000, 5, '2014-12-11 16:00:00', 91),
+(1000, 6, '2014-11-11 16:00:00', 99),
+(1000, 7, '2014-09-12 16:00:00', 84),
+(1000, 8, '2014-11-11 09:00:00', 75),
+(1000, 9, '2012-11-13 16:00:00', 86),
+(1000, 10, '2014-11-15 16:00:00', 77),
+(1000, 11, '2015-11-22 16:00:00', 67),
+(1000, 12, '2017-12-04 16:00:00', 73),
+(1000, 13, '2012-11-11 16:00:00', 84),
+(1000, 14, '2014-11-12 16:00:00', 89),
+(1000, 15, '2013-11-10 16:00:00', 64),
+(1000, 16, '2016-10-14 16:00:00', 97),
+(1000, 17, '2014-12-14 16:00:00', 71);
+
+(1001, 1, '2011-12-11 16:00:00', 85),
+(1001, 2, '2012-10-12 16:00:00', 70),
+(1001, 3, '2012-03-11 09:00:00', 68),
+(1001, 4, '2012-04-13 16:00:00', 98),
+(1001, 5, '2013-12-11 16:00:00', 58),
+(1001, 6, '2013-11-11 16:00:00', 95),
+(1001, 7, '2013-09-12 16:00:00', 74),
+(1001, 8, '2016-11-11 09:00:00', 62),
+(1001, 9, '2015-11-13 16:00:00', 91),
+(1001, 10, '2014-11-15 16:00:00', 78),
+(1001, 11, '2015-11-22 16:00:00', 48),
+(1001, 12, '2017-12-04 16:00:00', 78),
+(1001, 13, '2012-11-11 16:00:00', 70),
+(1001, 14, '2013-11-12 16:00:00', 66),
+(1001, 15, '2014-11-10 16:00:00', 88),
+(1001, 16, '2015-10-14 16:00:00', 100),
+(1001, 17, '2013-12-14 16:00:00', 88);
+```
+
+### 4.2 指定查询字段
+
+> 基本语法：SELECT 字段 FROM 表
+
+```mysql
+-- 查询全部的学生，SELECT 字段 FROM 表
+SELECT * FROM student
+
+ -- 查询指定字段
+SELECT `studentno`, `studentname` FROM `student`
+
+-- AS 给字段起别名，不需要加引号
+SELECT `studentno` AS 学号, `studentname` AS 姓名 FROM `student`
+
+-- AS 也可以给表起别名
+SELECT `studentno` AS 学号, `studentname` AS 姓名 FROM `student` AS s
+
+-- 函数 concat(a, b)
+SELECT CONCAT('姓名：', studentname) AS 新名字 FROM `student`
+```
+
+> DISTINCT 去重，去除 SELECT 查询出来的结果中重复的数据，只显示一条
+
+```mysql
+-- 查询有哪些同学有成绩
+SELECT * FROM `result`
+SELECT `studentno` FROM `result`
+SELECT DISTINCT `studentno` FROM `result` -- 对重复的数据进行去重
+```
+
+> 数据库的列（表达式），语法：SELECT 表达式 FROM 表
+
+数据库中的表达式包括：文本值、列、Null、函数、计算表达式、系统变量等
+
+```mysql
+SELECT VERSION() -- 查询系统版本（函数）
+
+SELECT 100 * 3 - 1 AS 计算结果 -- 用来计算（表达式）
+
+SELECT @@auto_increment_increment -- 查询自增的步长（变量）
+
+SELECT `studentno`, `studentresult` + 1 AS '提分后' FROM result -- 学生考试成绩 +1分 查看
+```
+
+### 4.3 where条件子句
+
+where作用：检索数据中**符合条件**的值，搜索的条件由一个或多个表达式组成，结果为布尔值
+
+> 逻辑运算符
+
+|   运算符    |        语法        |  描述  |
+| :---------: | :----------------: | :----: |
+|  and 或 &&  | a and b 或 a && b  | 逻辑与 |
+| or  或 \|\| | a or b 或 a \|\| b | 逻辑或 |
+|  not 或 !   |    not a 或 !a     | 逻辑非 |
+
+```mysql
+-- 查询考试成绩在 95~100 之间
+SELECT `studentno`, `studentresult` FROM result
+WHERE `studentresult` >= 95 AND `studentresult` <= 100
+
+SELECT `studentno`, `studentresult` FROM result
+WHERE `studentresult` >= 95 && `studentresult` <= 100
+
+SELECT `studentno`, `studentresult` FROM result
+WHERE `studentresult` BETWEEN 95 AND 100
+
+-- 查询学号不为 1000 的学生
+SELECT `studentno`, `studentresult` FROM result
+WHERE `studentno` != 1000
+
+SELECT `studentno`, `studentresult` FROM result
+WHERE NOT `studentno` = 1000
+```
+
+> **模糊查询**：比较运算符
+
+|   运算符    |        用法         |                     描述                      |
+| :---------: | :-----------------: | :-------------------------------------------: |
+|   is null   |      a is null      |             如果a为null，结果为真             |
+| is not null |    a is not null    |            如果a不为null，结果为真            |
+|   between   |  a between b and c  |           如果a在b和c之间，结果为真           |
+|  **like**   |      a like b       |        SQL匹配，如果a匹配到b，结果为真        |
+|   **in**    | a in a1, a2, a3,... | 如果a在a1, a2, a3,...其中的某一个中，结果为真 |
+
+- **like（正则表达式） 结合 % 代表0到任意个字符，_ 代表一个字符 **
+
+```mysql
+-- 查询姓赵的同学
+SELECT `studentno`, `studentname` FROM student
+WHERE `studentname` LIKE '赵%' -- 能查出来“赵某”，“赵某某”等等
+
+-- 查询姓张的同学
+SELECT `studentno`, `studentname` FROM student
+WHERE `studentname` LIKE '张_' -- 能查出来“张某”
+
+SELECT `studentno`, `studentname` FROM student
+WHERE `studentname` LIKE '张_' -- 能查出来“张某某”
+
+-- 查询名字中间有“嘉”字的同学
+SELECT `studentno`, `studentname` FROM student
+WHERE `studentname` LIKE '%嘉%'
+```
+
+- **in**
+
+```mysql
+-- 查询 1000，1001 号学生
+SELECT `studentno`, `studentname` FROM student
+WHERE `studentno` IN (1000, 1001)
+
+-- 查询地址为北京朝阳的学生 注意：不能使用类似 %北京 这样模糊匹配，in是精确查询，正则表达式匹配只有在like中使用
+SELECT `studentno`, `studentname` FROM student
+WHERE `address` IN ('北京朝阳')
+```
+
+- **null,  not null**
+
+```mysql
+-- 查询地址为空的学生 null 或 ''
+SELECT `studentno`, `studentname` FROM student
+WHERE `address` = ''OR `address` IS NULL
+
+-- 查询出生日期不为空的学生
+SELECT `studentno`, `studentname` FROM student
+WHERE `borndate` IS NOT NULL
+```
+
+### 4.4 联表查询
+
