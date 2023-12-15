@@ -428,35 +428,20 @@ DQL（Data Query Language）是数据查询语言
 - **数据库中最核心的语言，最重要的语句**
 - 使用频率最高的语句
 
-> SELECT 完整语法
+> SELECT 完整语法，其中，**[]括号表示可选的，{}括号表示必选的**
 
 ```mysql
-SELECT
-	[ALL | DISTINCT | DISTINCTROW]
-		[HIGH_PRIORITY]
-		[STRAIGHT_JOIN]
-		[SQL_SMALL_RESULT] [SQL_BIG_RESULT] [SQL_BUFFER_RESULT]
-		[SQL_CACHE | SQL_NO_CACHE] [SQL_CALC_FOUND_ROWS]
-	select_expr [, select_expr ...]
-	[FROM table_references
-		[PARTITION partition_list]
-	[WHERE where_condition]
-	[GROUP BY {col_name | expr | position}
-    	[ASC | DESC], ... [WITH ROLLUP]]
-	[HAVING where_condition]
-	[ORDER BY {col_name | expr | position}
-		[ASC | DESC], ...]
-    [LIMIT {[offset,] row_count | row_count OFFSET offset}]
-    [PROCEDURE procedure_name(argument_list)]
-    [INTO OUTFILE 'file_name'
-		[CHARACTER SET charset_name]
-		export_options
-		| INTO DUMPFILE 'file_name'
-		| INTO var_name[, var_name]]
-    [FOR UPDATE | LOCK IN SHARE MODE]]
+SELECT [ALL | DISTINCT]
+{* | table.* | [table.field1[as alias1][, table.field2[as alias2]][,...]]}
+FROM table_name [as table_alias]
+	[left | right | inner join table_name2] -- 联合查询
+	[where ...] -- 指定结果需满足的条件
+	[GROUP BY ...] -- 指定结果按照哪几个字段来分组
+	[HAVING] -- 过滤分组的记录必须满足的次要条件
+	[ORDER BY ...] -- 指定查询记录按一个或多个条件排序
+	[LIMIT {[offset,]row_count | row_countOFFSET offset}];
+	-- 指定查询的记录从哪条至哪条
 ```
-
-
 
 ### 4.1 数据准备
 
@@ -731,3 +716,352 @@ WHERE `borndate` IS NOT NULL
 
 ### 4.4 联表查询
 
+#### 4.4.1 联表查询 join on
+
+|    操作    |                    描述                    |
+| :--------: | :----------------------------------------: |
+| inner join |      如果表中至少有一个匹配，就返回行      |
+| left join  | 会从左表中返回所有的值，即使右表中没有匹配 |
+| right join | 会从右表中返回所有的值，即使左表中没有匹配 |
+
+```mysql
+-- join （连接的表） on （判断条件）   连接查询
+-- where                           等值查询
+-- join on 是固定语法，但是 on 与 where 效果是一样的
+
+
+-- 查询参加了考试的同学（学号、姓名、科目编号、分数）
+
+/*
+思路： 
+	1，分析查询的字段来自哪些表
+	2. 确定使用哪种连接查询
+	3. 确定交叉点（两个表中的哪个数据是相同的）
+*/
+
+-- INNER JOIN
+SELECT s.`studentno`, `studentname`, `subjectno`, `studentresult`
+FROM student AS s
+INNER JOIN result AS r
+ON s.`studentno` = r.`studentno`
+
+-- RIGHT JOIN
+SELECT s.`studentno`, `studentname`, `subjectno`, `studentresult`
+FROM student s -- AS 可以省略
+RIGHT JOIN result r
+ON s.`studentno` = r.`studentno`
+
+-- LEFT JOIN
+SELECT s.`studentno`, `studentname`, `subjectno`, `studentresult`
+FROM student AS s
+LEFT JOIN result AS l
+ON s.`studentno` = l.`studentno`
+```
+
+插入一个缺考的同学
+
+```mysql
+-- 插入一个缺考的同学，即只增加 student 表，不改变 result 表
+INSERT INTO `school`.`student` (`studentno`, `loginpwd`, `studentname`, `sex`, `gradeid`, `phone`, `address`, `borndate`, `email`, `identitycard`) VALUES ('1002', '123456', 'sun', '1', '3', '44545454545', '山东济南', '2023-12-05 23:14:09', 'ysf@qq.com', '323131231133123123')
+```
+
+查询刚插入的缺考同学
+
+```mysql
+-- 查询缺考的同学
+SELECT s.`studentno`, `studentname`, `subjectno`, `studentresult`
+FROM student s
+LEFT JOIN result l
+ON s.`studentno` = l.`studentno`
+WHERE l.`studentresult` IS NULL
+```
+
+> **思考题**
+
+涉及超过两张表的查询，先查询两张表再慢慢增加
+
+```mysql
+-- 查询参加了考试的同学信息：学号、姓名、科目名、分数
+SELECT s.`studentno`, `studentname`, `subjectname`, `studentresult`
+FROM student s
+RIGHT JOIN result r
+ON s.`studentno` = r.`studentno`
+INNER JOIN `subject` sub
+ON r.`subjectno` = sub.`subjectno`
+```
+
+#### 4.4.2 自连接（了解）
+
+思路：将一张表拆为两张一样的表
+
+数据准备
+
+```mysql
+CREATE TABLE `category`(
+ `categoryid` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主题id',
+ `pid` INT(10) NOT NULL COMMENT '父id',
+ `categoryname` VARCHAR(50) NOT NULL COMMENT '主题名字',
+PRIMARY KEY (`categoryid`) 
+ ) ENGINE=INNODB  AUTO_INCREMENT=9 DEFAULT CHARSET=utf8; 
+
+INSERT INTO `category` (`categoryid`, `pid`, `categoryname`) 
+VALUES ('2','1','信息技术'),
+('3','1','软件开发'),
+('5','1','美术设计'),
+('4','3','数据库'),
+('8','2','办公信息'),
+('6','3','web开发'),
+('7','5','ps技术');
+```
+
+父类
+
+| categoryid | categoryname |
+| :--------: | :----------: |
+|     2      |   信息技术   |
+|     3      |   软件开发   |
+|     5      |   美术设计   |
+
+子类
+
+| pid  | categoryid | categoryname |
+| :--: | :--------: | :----------: |
+|  3   |     4      |    数据库    |
+|  2   |     8      |   办公信息   |
+|  3   |     6      |   web开发    |
+|  5   |     6      |    ps技术    |
+
+操作：查询父类对应的子类关系
+
+|   父类   |   子类   |
+| :------: | :------: |
+| 信息技术 | 办公信息 |
+| 软件开发 |  数据库  |
+| 软件开发 | web开发  |
+| 美术设计 |  ps技术  |
+
+```mysql
+-- 查询父子信息：把一张表看成两张一模一样的表
+SELECT a.`categoryname` AS '父栏目', b.`categoryname` AS '子栏目'
+FROM `category` AS a, `category` AS b
+WHERE a.`categoryid` = b.`pid`
+```
+
+#### 4.4.3 练习
+
+1. 查询学生所属的年级：学号、姓名、年级名称
+
+```mysql
+SELECT s.`studentno`, s.`studentname`, g.`gradename`
+FROM `student` AS s
+INNER JOIN `grade` AS g
+ON s.`gradeid` = g.`gradeid`
+```
+
+2. 查询科目所属的年级：科目名称，年级名称
+
+```mysql
+SELECT `subjectname`, `gradename`
+FROM `grade` AS g
+INNER JOIN `subject` AS s
+ON g.`gradeid` = s.`gradeid`
+```
+
+3. 查询参加了《数据库结构》考试的同学的信息：学号，姓名，科目名称，分数
+
+```mysql
+SELECT s.`studentno`, s.`studentname`, sub.`subjectname`, res.`studentresult`
+FROM `student` AS s
+INNER JOIN `subject` AS sub
+ON s.`gradeid` = sub.`gradeid`
+INNER JOIN `result` AS res
+ON sub.`subjectno` = res.`subjectno`
+WHERE sub.`subjectname` LIKE '数据库结构-_'
+```
+
+### 4.5 排序和分页
+
+#### 4.5.1 排序
+
+> -- 升序 ASC   降序 DESC
+> -- ORDER BY 字段：表示根据哪个字段排序
+
+例：查询参加了《数据库结构》考试的同学的信息：学号，姓名，科目名称，分数。查询结果按降序排序
+
+```mysql
+SELECT s.`studentno`, s.`studentname`, sub.`subjectname`, res.`studentresult`
+FROM `student` AS s
+INNER JOIN `subject` AS sub
+ON s.`gradeid` = sub.`gradeid`
+INNER JOIN `result` AS res
+ON sub.`subjectno` = res.`subjectno`
+WHERE sub.`subjectname` LIKE '数据库结构-_'
+ORDER BY res.`studentresult` DESC
+```
+
+#### 4.5.2 分页
+
+分页可以缓解数据库压力，带来刚好的用户体验。 不分页的情况如图片采用瀑布流处理（抖音等）
+
+> 语法：limit 起始值，页面的大小
+
+```mysql
+-- 第一页：limit 0, 5
+-- 第二页：limit 5, 5
+-- 第n页：limit (n - 1) * 5, 5
+
+SELECT s.`studentno`, s.`studentname`, sub.`subjectname`, res.`studentresult`
+FROM `student` AS s
+INNER JOIN `subject` AS sub
+ON s.`gradeid` = sub.`gradeid`
+INNER JOIN `result` AS res
+ON sub.`subjectno` = res.`subjectno`
+WHERE sub.`subjectname` LIKE '数据库结构-_'
+ORDER BY res.`studentresult` DESC
+LIMIT 0, 5
+```
+
+#### 4.5.3 练习
+
+1. 查询 《Java程序设计-1》课程成绩排名前十，并且分数要大于80的学生信息：学号，姓名，课程名称，分数
+
+```mysql
+SELECT s.`studentno`, s.`studentname`, sub.`subjectname`, r.`studentresult`
+FROM `student` s
+INNER JOIN `result` r
+ON s.`studentno` = r.`studentno`
+INNER JOIN `subject` sub
+ON sub.`subjectno` = r.`subjectno`
+WHERE subjectname = 'Java程序设计-1' AND studentresult > 80
+ORDER BY r.`studentresult` DESC
+LIMIT 0, 10
+```
+
+### 4.6 子查询
+
+> 本质：在 where 中嵌套子查询语句，==速度比联表更快==
+
+例：
+
+1.  查询《数据库结构-1》的所有考试成绩降序排列：学号、科目编号、成绩
+
+方式一：联表查询
+
+```mysql
+SELECT r.`studentno`, sub.`subjectno`, `studentresult`
+FROM `result` r
+INNER JOIN `subject` sub
+ON sub.`subjectno` = r.`subjectno`
+WHERE sub.`subjectname` = '数据库结构-1'
+ORDER BY `studentresult` DESC
+```
+
+方式二：子查询（由里及外）
+
+```mysql
+SELECT `studentno`, `subjectno`, `studentresult`
+FROM `result` 
+WHERE `subjectno` = (
+	SELECT `subjectno` FROM `subject`
+	WHERE `subjectname` = '数据库结构-1'
+)
+ORDER BY `studentresult` DESC
+```
+
+2. 查询《高等数学-2》分数不少于70的学生信息：学号，姓名
+
+方式一：联表查询
+
+```mysql
+SELECT s.`studentno`, s.`studentname`
+FROM `student` s
+INNER JOIN `result` r
+ON s.`studentno` = r.`studentno`
+INNER JOIN `subject` sub
+ON sub.`subjectno` = r.`subjectno`
+WHERE sub.`subjectname` = '高等数学-2' AND r.`studentresult` >= 70
+```
+
+方式二：子查询（由里及外）
+
+```mysql
+SELECT DISTINCT s.`studentno`, `studentname`
+FROM `student` s
+INNER JOIN `result` r
+ON s.`studentno` = r.`studentno`
+WHERE r.`studentresult` >= 70 AND r.`subjectno` = (
+	SELECT `subjectno` FROM `subject` 
+	WHERE `subjectname` = '高等数学-2'
+)
+```
+
+方式三：进一步由里及外
+
+```mysql
+SELECT `studentno`, `studentname` FROM `student` WHERE`studentno` IN (
+	SELECT `studentno` FROM `result` WHERE `studentresult` >= 70 AND `subjectno` = (
+		SELECT `subjectno` FROM `subject` WHERE `subjectname` = '高等数学-2'
+	)
+)
+```
+
+## 5. MySQL函数
+
+[官网](https://www.mysqlzh.com/doc/113.html)
+
+### 5.1 常用函数
+
+1. 数学运算
+
+```mysql
+SELECT ABS(-8) -- 绝对值
+SELECT CEILING(9.4) -- 向上取整
+SELECT FLOOR(9.4) -- 向下取整
+SELECT RAND() -- 返回一个 0~1 之间的随机数
+SELECT SIGN(10) -- 判断一个数的符号 0→0，负数→-1，正数→1
+```
+
+2. 字符串函数
+
+```mysql
+SELECT CHAR_LENGTH('即使在小的帆也能远航') -- 字符串长度
+SELECT CONCAT('我', '爱', '你们') -- 拼接字符串
+SELECT INSERT('我爱编程helloworld', 1, 2, '超级热爱') -- 从某个位置开始替换某个长度的字符串
+SELECT LOWER('aBcD') -- 小写字母
+SELECT UPPER('abcd') -- 大写字母
+SELECT INSTR('sun1f', '1') -- 返回第一次出现的子串的索引
+SELECT REPLACE('坚持就能成功', '坚持', '努力') -- 替换出现的指定字符串
+SELECT SUBSTR('坚持就能成功', 4, 6) -- 返回指定的字符串（原字符串，截取的位置，截取的长度）
+SELECT REVERSE('你是年少的欢喜') -- 反转
+
+-- 查询赵姓同学的名字并将其替换成邹姓
+SELECT REPLACE(`studentname`, '赵', '邹') FROM `student`
+WHERE `studentname` LIKE '赵%'
+```
+
+3. 时间和日期函数（记住）
+
+```mysql
+SELECT CURRENT_DATE() -- 当前日期
+SELECT CURDATE() -- 当前日期
+SELECT NOW() -- 当前时间
+SELECT LOCALTIME() -- 本地时间
+SELECT SYSDATE() -- 系统时间
+
+SELECT YEAR(NOW())
+SELECT MONTH(NOW())
+SELECT DAY(NOW())
+SELECT HOUR(NOW())
+SELECT MINUTE(NOW())
+SELECT SECOND(NOW())
+```
+
+4. 系统
+
+```mysql
+SELECT SYSTEM_USER()
+SELECT USER()
+SELECT VERSION()
+```
+
+### 5.2 聚合函数（常用）
