@@ -1005,6 +1005,26 @@ SELECT `studentno`, `studentname` FROM `student` WHERE`studentno` IN (
 )
 ```
 
+### 4.7 分组和过滤
+
+> group by + having
+
+例：查询不同课程的得分情况：科目名称，平均分（大于80的），最高分，最低分。
+
+```mysql
+SELECT `subjectname`, AVG(`studentresult`), MAX(`studentresult`), MIN(`studentresult`)
+FROM `result` r
+INNER JOIN `subject` sub
+ON sub.`subjectno` = r.`subjectno`
+GROUP BY r.`subjectno` -- 通过什么字段来分组
+HAVING AVG(`studentresult`) > 80
+```
+
+**核心：**
+
+- **根据不同的课程分组**
+- **分组后再进行条件筛选不能用 where，要用 having**
+
 ## 5. MySQL函数
 
 [官网](https://www.mysqlzh.com/doc/113.html)
@@ -1065,3 +1085,1124 @@ SELECT VERSION()
 ```
 
 ### 5.2 聚合函数（常用）
+
+| 函数名称 |  作用  |
+| :------: | :----: |
+| count()  |  计数  |
+|  sum()   |  求和  |
+|  avg()   | 平均值 |
+|  max()   | 最大值 |
+|  min()   | 最小值 |
+
+```mysql
+SELECT COUNT(`borndate`) FROM `student` -- count(字段)，会忽略所有的null值
+SELECT COUNT(*) FROM `result` -- count(*)，不会忽略null值，本质是计算行数
+SELECT COUNT(1) FROM `result` -- count(1)，不会忽略null值，本质也是计算行数
+
+SELECT SUM(`studentresult`) FROM `result`
+SELECT AVG(`studentresult`) FROM `result`
+SELECT MAX(`studentresult`) FROM `result`
+SELECT MIN(`studentresult`) FROM `result`
+```
+
+### 5.3 数据库级别的MD5加密（扩展）
+
+什么是md5：
+
+- 增强算法的复杂度与不可逆性
+- md5不可逆，相同的值的md5是一样的
+
+```mysql
+============================ 数据准备 ============================
+CREATE TABLE `testmd5` (
+	`id` INT(4) NOT NULL,
+	`name` VARCHAR(20) NOT NULL,
+	`pwd` VARCHAR(50) NOT NULL,
+	PRIMARY KEY(`id`)
+)ENGINE=INNODB DEFAULT CHARSET=utf8
+
+============================== 测试 ==============================
+-- 明文密码
+INSERT INTO `testmd5` VALUES (1, 'sun1f', '1234'), (2, 'sun2f', '1243'), (3, 'sun3f', '1254')
+
+-- 加密 id = 1 的密码
+UPDATE `testmd5` SET `pwd` = MD5(pwd) WHERE `id` = 1
+ -- 加密全部密码
+UPDATE `testmd5` SET `pwd` = MD5(pwd)
+
+-- 插入时直接加密
+INSERT INTO `testmd5` VALUES (4, 'sun4f', MD5('1423'))
+
+-- 如何校验：将用户传递进来的密码进行md5加密，然后比对加密后的值
+SELECT * FROM `testmd5` WHERE `name` = 'sun4f' AND `pwd` = MD5('1423')
+```
+
+## 6. 事务
+
+### 6.1 事务的ACID原则
+
+> 事务原则：ACID，即原子性，一致性，隔离性，持久性 （脏读，幻读...）
+
+- **原子性（Atomicity）**
+
+​		要么都成功，要么都失败
+
+- **一致性（Consistency）**
+
+​		事务前后的数据完整性要保证一致
+
+- **隔离性（Isolation）**
+
+  多个用户并发访问数据库时，数据库为每一个用户开启的事务，不能被其他事务所干扰，事务之间要相互隔离
+
+  所导致的一些问题：
+
+  - 脏读：指一个事务读取了另外一个事务未提交的数据
+  - 不可重复读：在一个事务内读取表中的某一行数据，多次读取结果不同（这个不一定是错误，只是某些场合不对）
+  - 虚读（幻读）：指在一个事务内读取到了别的事务插入的数据，导致前后读取不一致
+
+- **持久性（Durability）**
+
+​		事务一旦提交则不可逆，被持久化到数据库中
+
+```mysql
+-- mysql 是默认开启事务自动提交的
+SET autocommit = 0
+SET autocommit = 1
+
+-- 手动处理事务
+SET autocommit = 0 -- 关闭自动提交
+
+-- 事务开启
+START TRANSACTION -- 标记事务的开始，从这个之后 sql 都在同一个事务内
+
+INSERT xx
+INSERT xx
+
+-- 提交；持久化（成功）
+COMMIT
+
+-- 回滚：回滚到原来的样子（失败）
+ROLLBACK
+
+-- 事务结束
+SET autocommit = 1 -- 开启自动提交
+
+-- 了解
+SAVEPOINT 保存点名 -- 设置一个事物的保存点
+ROLLBACK TO SAVEPOINT 保存点名 -- 回滚到保存点
+RELEASE SAVEPOINT 保存点名 -- 撤销保存点
+```
+
+> 场景模拟：转账
+
+```mysql
+-- 数据准备：创建数据库 shop
+CREATE DATABASE shop CHARACTER SET utf8 COLLATE utf8_general_ci
+USE shop
+
+CREATE TABLE `account` (
+	`id` INT(3) NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(30) NOT NULL,
+	`money` DECIMAL(9, 2) NOT NULL,
+	PRIMARY KEY(`id`)
+)ENGINE = INNODB DEFAULT CHARSET = utf8
+
+-- 插入数据
+INSERT INTO `account` (`name`, `money`) VALUES ('A', 2000.00), ('B', 10000.00)
+
+SET autocommit = 0 -- 关闭自动提交
+START TRANSACTION -- 开启一个事务（一组事务）
+
+UPDATE `account` SET `money` = `money` - 500 WHERE `name` = 'A'
+UPDATE `account` SET `money` = `money` + 500 WHERE `name` = 'B'
+
+COMMIT -- 提交事务，被持久化
+ROLLBACK -- 回滚
+
+SET autocommit = 1 -- 恢复默认值
+```
+
+## 7. 索引
+
+> ==索引（Index）是==帮助MySQL高效获取数据的==数据结构==。
+
+### 7. 1 索引的分类
+
+- 主键索引（primary key）
+  - 唯一的标识，主键不可重复，只能有一个列作为主键
+- 唯一索引（unique index）
+  - 避免重复的列出现，唯一索引可以重复，多个列都可以标识为唯一索引
+- 常规索引（key / index）
+  - 默认的，通过index  / key 关键字来设置
+- 全文索引（FullText）
+  - 在特定的数据库引擎下才有，MyISAM
+  - 快速定位数据
+
+基础语法：
+
+```mysql
+-- 显示所有的索引信息
+SHOW INDEX FROM `student`
+
+-- 增加一个全文索引：索引名（字段名）
+ALTER TABLE `school`.`student` ADD FULLTEXT INDEX `studentname`(`studentname`)
+
+-- explain 分析 sql 的执行状况
+
+EXPLAIN SELECT * FROM `student` -- 非全文索引
+
+EXPLAIN SELECT * FROM `student` WHERE MATCH(`studentname`) AGAINST('赵')
+```
+
+### 7.2 测试索引
+
+数据准备：
+
+- 创建表 app_user
+
+```mysql
+CREATE TABLE `app_user` (
+`id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+`name` VARCHAR(50) DEFAULT '',
+`eamil` VARCHAR(50) NOT NULL,
+`phone` VARCHAR(20) DEFAULT '',
+`gender` TINYINT(4) UNSIGNED DEFAULT '0',
+`password` VARCHAR(100) NOT NULL DEFAULT '',
+`age` TINYINT(4) DEFAULT NULL,
+`create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+`update_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY (`id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8
+```
+
+- 插入100万条数据（不需要掌握）
+
+```mysql
+DELIMITER $$
+CREATE FUNCTION mock_data()
+RETURNS INT
+BEGIN
+	DECLARE num INT DEFAULT 1000000;
+	DECLARE i INT DEFAULT 0;
+	WHILE i < num DO
+		INSERT INTO `app_user`(`name``eamil``phone``gender``password``age`)
+		VALUES(CONCAT('用户', i), 'sun1f@foxmail.com',
+		CONCAT('18', FLOOR(RAND() * ((999999999 - 100000000) + 100000000))),
+		FLOOR(RAND() * 2), UUID(), FLOOR(RAND() * 100))
+		SET i = i + 1；
+	END WHILE;
+	RETURN i;
+END;
+SELECT mock_data();
+```
+
+测试：
+
+```mysql
+SELECT * FROM app_user WHERE `name` = '用户9999'; -- 1,098s
+EXPLAIN SELECT * FROM app_user WHERE `name` = '用户9999';
+
+-- 添加索引：create index 索引名 on 表(字段名)
+CREATE INDEX id_app_user_name ON app_user(`name`); 
+
+SELECT * FROM app_user WHERE `name` = '用户9999'; -- 0.001s
+EXPLAIN SELECT * FROM app_user WHERE `name` = '用户9999';
+```
+
+![1702953051219](E:\wechatfile\WeChat Files\wxid_7fcpz51fwzpt22\FileStorage\Temp\1702953051219.png)
+
+==索引在小数据量的时候用处不大，在大数据量的时候作用十分明显==
+
+### 7.3 索引原则
+
+- 索引不是越多越好
+- 不要对经常变动的数据加索引
+- 小数据量的表不需要加索引
+- 索引一般加载常用来查询的字段上
+
+索引的数据结构推荐阅读：[CodingLabs - MySQL索引背后的数据结构及算法原理](http://blog.codinglabs.org/articles/theory-of-mysql-index.html)
+
+## 8. 权限管理和备份
+
+### 8.1 用户管理
+
+```mysql
+-- 创建用户：create user 用户名 identified by 密码
+CREATE USER sun1f IDENTIFIED BY '123456'
+
+-- 修改当前用户密码
+SET PASSWORD = PASSWORD('111111')
+
+-- 修改指定用户密码
+SET PASSWORD FOR sun1f = PASSWORD('111111')
+
+-- 重命名 rename user 原名字 to 新名字
+RENAME USER sun1f AS sun2f
+
+-- 用户授权：grant 权限 on 数据库（表） to 用户
+-- all privileges是授予其全部的权限（除了给别人授权的功能，只有root有），*.*表示所有库的所有表
+GRANT ALL PRIVILEGES ON *.* TO sun2f
+
+-- 查看指定用户的权限
+SHOW GRANTS FOR sun2f 
+SHOW GRANTS FOR root@localhost
+
+-- 撤销权限：revoke 权限 on 数据库（表） from 用户
+REVOKE ALL PRIVILEGES ON *.* FROM sun2f
+
+-- 删除用户：drop user 用户
+DROP USER sun2f
+```
+
+### 8.2 MySQL备份
+
+为什么要备份：
+
+- 保证重要数据不丢失
+- 数据转移
+
+MySQL数据库备份的方式：
+
+- 直接拷贝物理文件
+
+- 在Sqlyog可视化工具中手动导出
+
+- 使用命令行导出 mysqldump命令
+
+  ```bash
+  # mysqldump -h主机 -u用户名 -p密码 数据库 表名 > 物理磁盘位置:/文件名
+  mysqldump -hlocalhost -uroot -p12345678 school student > D:/a.sql
+  
+  # mysqldump -h主机 -u用户名 -p密码 数据库 表名1 表名2 表名3 > 物理磁盘位置:/文件名
+  mysqldump -hlocalhost -uroot -p12345678 school result subject > D:/b.sql
+  
+  # mysqldump -h主机 -u用户名 -p密码 数据库 > 物理磁盘位置:/文件名
+  mysqldump -hlocalhost -uroot -p12345678 school > D:/c.sql
+  
+  # 导入：source 备份文件
+  source D:/a.sql
+  
+  # 登录的情况下，切换到指定的数据库
+  mysql -u用户名 -p密码 库名 < 备份文件
+  ```
+
+## 9. 规范数据库设计
+
+
+
+## 10. JDBC（重点）
+
+### 10.1 数据库驱动
+
+数据库同声卡、显卡一样也需要驱动，Java程序通过数据库驱动和数据库打交道
+
+![1702959032303](E:\wechatfile\WeChat Files\wxid_7fcpz51fwzpt22\FileStorage\Temp\1702959032303.png)
+
+### 10.2 JDBC
+
+SUN 公司为了简化开发人员的（对数据库的统一）操作，提供了一个（Java操作数据库的）规范，俗称 JDBC，这些规范的实现由具体厂商去做，对于开发人员来说，只需要掌握 JDBC 接口的操作即可
+
+![1702959407593](E:\wechatfile\WeChat Files\wxid_7fcpz51fwzpt22\FileStorage\Temp\1702959407593.png)
+
+### 10.3 第一个JDBC程序
+
+1. 创建测试数据库 `jdbcStudy`
+
+```mysql
+CREATE DATABASE `jdbcStudy` CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+USE `jdbcStudy`;
+
+CREATE TABLE `users`(
+ `id` INT PRIMARY KEY,
+ `NAME` VARCHAR(40),
+ `PASSWORD` VARCHAR(40),
+ `email` VARCHAR(60),
+ birthday DATE
+);
+
+ INSERT INTO `users`(`id`,`NAME`,`PASSWORD`,`email`,`birthday`)
+VALUES(1,'zhangsan','123456','zs@sina.com','1980-12-04'),
+(2,'lisi','123456','lisi@sina.com','1981-12-04'),
+(3,'wangwu','123456','wangwu@sina.com','1979-12-04')
+```
+
+2. 创建一个普通项目并导入数据库驱动 `mysql-connector-java-5.1.47.jar`
+
+   ![1702969958613](E:\wechatfile\WeChat Files\wxid_7fcpz51fwzpt22\FileStorage\Temp\1702969958613.png)
+
+3. 编写测试代码
+
+```java
+package com.sun1f.lesson1;
+
+import java.sql.*;
+
+public class jdbc_demo1 {
+    public static void main(String[] args) throws ClassNotFoundException, SQLException {
+        // 1. 加载驱动（固定写法）
+        Class.forName("com.mysql.jdbc.Driver");
+
+        // 2. 用户信息和url
+        // useUnicode=true 支持中文编码
+        // characterEncoding=utf8 设置中文字符集为utf8
+        // useSSL 使用安全连接
+        String url = "jdbc:mysql://localhost:3306/jdbcstudy?useUnicode=true&characterEncoding=utf8&useSSL=true";
+        String username = "root";
+        String password = "12345678";
+
+        // 3. 连接成功，返回数据库对象。connection就代表数据库
+        Connection connection = DriverManager.getConnection(url, username, password);
+
+        // 4. 执行SQL的对象 statement 执行sql的对象
+        Statement statement = connection.createStatement();
+
+        // 5. 执行SQL的对象 去执行sql，可能存在结果，查看返回结果
+        String sql = "SELECT * FROM users";
+
+        ResultSet resultSet = statement.executeQuery(sql); // 结果集中封装了全部查询出来的结果
+
+        while(resultSet.next()) {
+            System.out.println("id = " + resultSet.getObject("id"));
+            System.out.println("name = " + resultSet.getObject("NAME"));
+            System.out.println("pwd = " + resultSet.getObject("PASSWORD"));
+            System.out.println("email = " + resultSet.getObject("email"));
+            System.out.println("birth = " + resultSet.getObject("birthday"));
+        }
+
+        // 6. 释放连接
+        resultSet.close();
+        statement.close();
+        connection.close();
+    }
+}
+```
+
+**步骤总结：**
+
+1. 加载驱动
+2. 连接数据库 DriverManager
+3. 获取执行sql的对象 Statement
+4. 获取返回的结果集
+5. 释放连接
+
+**详细解释：**
+
+`DriverManager`
+
+```java
+ // DriverManager.registerDriver(new com.mysql.jdbc.Driver());
+ Class.forName("com.mysql.jdbc.Driver"); // 固定写法，加载驱动
+Connection connection = DriverManager.getConnection(url, username, password);
+
+// connection 代表数据库，可以做数据库层面的所有操作，如数据库设置自动提交，事务提交，事务回滚等
+connection.commit();
+connection.rollback();
+connection.setAutoCommit();
+```
+
+`URL`
+
+```java
+String url = "jdbc:mysql://localhost:3306/jdbcstudy?useUnicode=true&characterEncoding=utf8&useSSL=true";
+
+// 写法：协议://主机地址:端口号/数据库名?参数1&参数2&参数3
+
+// mysql    ->   jdbc:mysql://localhost:3306
+// oracle   ->   jdbc:oracle:thin:@localhost:1521:sid
+```
+
+`Statement / PrepareStatement 执行SQL的对象`
+
+```java
+String sql = "SELECT * FROM users"; // 编写SQL
+
+statement.executeQuery(sql); // 查询操作返回 ResultSet
+statement.execute(sql); // 执行任何SQL
+statement.executeUpdate(sql); // 更新、插入、删除都用这个方法，返回受影响的行数
+```
+
+`ResultSet`
+
+- 获取指定的数据类型
+
+  ```java
+  resultSet.getObject(xxx); // 不知道字段类型的情况下使用，xxx为字段
+  // 如果知道字段的类型就使用指定的类型
+  resultSet.getString(xxx);
+  resultSet.getInt(xxx);
+  resultSet.getFloat(xxx);
+  resultSet.getDate(xxx);
+  ```
+
+- 通过指针遍历
+
+  ```java
+  resultSet.beforeFirst(); // 移动到最前面
+  resultSet.afterLast(); // 移动到最后面
+  resultSet.next(); // 移动到下一个数据
+  resultSet.previous(); // 移动到前一行
+  resultSet.absolute(row); // 移动到指定行（第row行）
+  ```
+
+`close`
+
+```java
+// 释放连接
+resultSet.close();
+statement.close();
+connection.close(); // 很耗资源，用完必须关掉
+```
+
+### 10.4 Statement对象
+
+==jdbc中的statement对象用于向数据库发送SQL语句。想完成对数据库的增删改查，只需通过这个对象向数据库发送增删改查的SQL语句即可。==
+
+statement对象的executeUpdate方法，用于向数据库发送增、删、改的SQL语句，executeUpdate执行完后，返回一个整数（即增删改语句导致了数据库多少行数据发生了变化）。
+
+statement.executeQuery方法用于向数据库发送查询语句，executeQuery方法返回代表查询结果的ResultSet对象。
+
+**CRUD 操作：**
+
+- create：使用executeUpdate(String sql)方法完成数据添加操作
+
+  ```java
+  statement st = conn.createStatement();
+  String sql = "insert into user (...) values (...)";
+  int num = st.executeUpdate(sql);
+  if(num > 0) {
+      System.out.println("插入成功！");
+  }
+  ```
+
+- delete：使用executeUpdate(String sql)方法完成对数据库的删除操作
+
+  ```java
+  statement st = conn.createStatement();
+  String sql = "delete from user where id = 1";
+  int num = st.executeUpdate(sql);
+  if(num > 0) {
+      System.out.println("删除成功！");
+  }
+  ```
+
+- update：使用executeUpdate(String sql)方法完成数据修改操作
+
+  ```java
+  statement st = conn.createStatement();
+  String sql = "update user set name = '' where name = ''";
+  int num = st.executeUpdate(sql);
+  if(num > 0) {
+      System.out.println("修改成功！");
+  }
+  ```
+
+- read：使用executeQuery(String sql)方法完成对数据库的查询操作
+
+  ```java
+  statement st = conn.createStatement();
+  String sql = "select * from user where id = 1";
+  int num = st.executeQuery(sql);
+  if(rs.next()) {
+      // 根据获取列的数据类型，分别调用rs的相应方法映射到java对象中
+  }
+  ```
+
+**代码实现：**
+
+1. 提取工具类
+
+   ```java
+   package com.sun1f.lesson2.utils;
+   
+   import java.io.IOException;
+   import java.io.InputStream;
+   import java.sql.*;
+   import java.util.Properties;
+   
+   public class jdbcUtils {
+   
+       private static String driver = null;
+       private static String url = null;
+       private static String username = null;
+       private static String password = null;
+   
+       static {
+           try {
+               InputStream in = jdbcUtils.class.getClassLoader().getResourceAsStream("db.properties");
+               Properties properties = new Properties();
+               properties.load(in);
+   
+               driver = properties.getProperty("driver");
+               url = properties.getProperty("url");
+               username = properties.getProperty("username");
+               password = properties.getProperty("password");
+   
+               // 1. 驱动只需加载一次
+               Class.forName(driver);
+           } catch (IOException e) {
+               throw new RuntimeException(e);
+           } catch (ClassNotFoundException e) {
+               throw new RuntimeException(e);
+           }
+       }
+       // 2. 获取连接
+       public static Connection getConnection() throws SQLException {
+           return DriverManager.getConnection(url, username, password);
+       }
+   
+       // 3. 释放资源
+       public static void release(Connection conn, Statement st, ResultSet rs) {
+           if(rs != null) {
+               try {
+                   rs.close();
+               } catch (SQLException e) {
+                   throw new RuntimeException(e);
+               }
+           }
+           if(st != null) {
+               try {
+                   st.close();
+               } catch (SQLException e) {
+                   throw new RuntimeException(e);
+               }
+           }
+           if(conn != null) {
+               try {
+                   conn.close();
+               } catch (SQLException e) {
+                   throw new RuntimeException(e);
+               }
+           }
+       }
+   }
+   ```
+
+2. 编写增、删、改的方法：`executeUpdate`
+
+   - 增
+
+     ```java
+     package com.sun1f.lesson2.utils;
+     
+     import java.sql.Connection;
+     import java.sql.ResultSet;
+     import java.sql.SQLException;
+     import java.sql.Statement;
+     
+     public class TestInsert {
+         public static void main(String[] args) {
+             Connection conn = null;
+             Statement st = null;
+             ResultSet rs = null;
+     
+             try {
+                 conn = jdbcUtils.getConnection();
+                 st = conn.createStatement();
+                 String sql = "INSERT INTO `users`(`id`, `NAME`, `PASSWORD`, `email`, `birthday`)" +
+                         "VALUES(4, 'sun1f', '123456', 'sun1f@foxmail.com', '2021-01-23')";
+     
+                 int i = st.executeUpdate(sql);
+                 if(i > 0) {
+                     System.out.println("插入成功！");
+                 }
+     
+             } catch (SQLException e) {
+                 throw new RuntimeException(e);
+             } finally {
+                 jdbcUtils.release(conn, st, rs);
+             }
+         }
+     }
+     ```
+
+   - 删
+
+     ```java
+     package com.sun1f.lesson2.utils;
+     
+     import java.sql.Connection;
+     import java.sql.ResultSet;
+     import java.sql.SQLException;
+     import java.sql.Statement;
+     
+     public class TestDelete {
+         public static void main(String[] args) {
+             Connection conn = null;
+             Statement st = null;
+             ResultSet rs = null;
+     
+             try {
+                 conn = jdbcUtils.getConnection();
+                 st = conn.createStatement();
+                 String sql = "DELETE FROM `users` WHERE `id` = 4";
+     
+                 int i = st.executeUpdate(sql);
+                 if(i > 0) {
+                     System.out.println("删除成功！");
+                 }
+     
+             } catch (SQLException e) {
+                 throw new RuntimeException(e);
+             } finally {
+                 jdbcUtils.release(conn, st, rs);
+             }
+         }
+     }
+     ```
+
+   - 改
+
+     ```java
+     package com.sun1f.lesson2.utils;
+     
+     import java.sql.Connection;
+     import java.sql.ResultSet;
+     import java.sql.SQLException;
+     import java.sql.Statement;
+     
+     public class TestUpdate {
+         public static void main(String[] args) {
+             Connection conn = null;
+             Statement st = null;
+             ResultSet rs = null;
+     
+             try {
+                 conn = jdbcUtils.getConnection();
+                 st = conn.createStatement();
+                 String sql = "UPDATE `users` SET `NAME` = 'zhaosi', `PASSWORD` = '1234', " +
+                         "`email` = 'zhaosi@sina.com', `birthday` = '1992-12-21' WHERE `id` = 3";
+     
+                 int i = st.executeUpdate(sql);
+                 if(i > 0) {
+                     System.out.println("修改成功！");
+                 }
+     
+             } catch (SQLException e) {
+                 throw new RuntimeException(e);
+             } finally {
+                 jdbcUtils.release(conn, st, rs);
+             }
+         }
+     }
+     ```
+
+3. 查询代码：`executeQuery`
+
+   ```java
+   package com.sun1f.lesson2.utils;
+   
+   import java.sql.Connection;
+   import java.sql.ResultSet;
+   import java.sql.SQLException;
+   import java.sql.Statement;
+   
+   public class TestSelect {
+       public static void main(String[] args) {
+           Connection conn = null; // 由于最后要释放，所以不能写在try里面，单独提到外面
+           Statement st = null;
+           ResultSet rs = null;
+   
+           try {
+               conn = jdbcUtils.getConnection();
+               st = conn.createStatement();
+   
+               // SQL
+               String sql = "select * from users where id = 1";
+               rs = st.executeQuery(sql);
+   
+               while(rs.next()) {
+                   System.out.println("Name: " + rs.getString("NAME"));
+                   System.out.println("PASSWORD: " + rs.getString("PASSWORD"));
+               }
+           } catch (SQLException e) {
+               throw new RuntimeException(e);
+           } finally {
+               jdbcUtils.release(conn, st, rs);
+           }
+       }
+   }
+   ```
+
+
+**SQL注入：**
+
+- SQL存在漏洞，会被攻击导致数据泄露。主要原因是在拼接时，`or`的作用
+
+  ```java
+  package com.sun1f.lesson2.utils;
+  
+  import java.sql.Connection;
+  import java.sql.ResultSet;
+  import java.sql.SQLException;
+  import java.sql.Statement;
+  
+  public class SQL_injection {
+      public static void main(String[] args) {
+          // login("zhaosi", "1234");
+          login(" ' or '1 = 1", " ' or '1 = 1");
+      }
+  
+      // 登录业务
+      public static void login(String username, String password) {
+          Connection conn = null; // 由于最后要释放，所以不能写在try里面，单独提到外面
+          Statement st = null;
+          ResultSet rs = null;
+  
+          try {
+              conn = jdbcUtils.getConnection();
+              st = conn.createStatement();
+  
+              // 带入非法的输入：where `NAME` = ' ' or '1 = 1' and `password` = ' ' or '1 = 1' 永远成立
+              String sql = "select * from users where `NAME` = '"+ username + "' and `password` = '"+ password + "'";
+              rs = st.executeQuery(sql);
+  
+  
+              while(rs.next()) {
+                  System.out.println("Name: " + rs.getString("NAME"));
+                  System.out.println("PASSWORD: " + rs.getString("PASSWORD"));
+                  System.out.println("birthday: " + rs.getDate("birthday"));
+              }
+          } catch (SQLException e) {
+              throw new RuntimeException(e);
+          } finally {
+              jdbcUtils.release(conn, st, rs);
+          }
+      }
+  }
+  ```
+
+  
+
+### 10.5 PreparedStatement对象
+
+PreparedStatement 可以防止SQL注入，效率更高
+
+- 增
+
+  ```java
+  package com.sun1f.lesson3;
+  
+  import java.sql.Connection;
+  import java.sql.PreparedStatement;
+  import java.sql.SQLException;
+  import java.util.Date;
+  
+  import com.sun1f.utils.*;
+  
+  public class TestInsert {
+      public static void main(String[] args) {
+          Connection conn = null;
+          PreparedStatement st = null;
+  
+          try {
+              conn = jdbcUtils.getConnection();
+  
+              // 和 Statement的区别
+              // 1. 使用 ? 占位符代替参数
+              String sql = "insert into users(id, `name`, `password`, `email`, `birthday`) values(?, ?, ?, ?, ?)";
+  
+              // 2. 预编译SQL：先不执行SQL
+              st = conn.prepareStatement(sql);
+  
+              // 3. 手动给参数赋值，set函数第一个参数表示第几个括号，第二个参数为赋值的内容
+              st.setInt(1, 4);
+              st.setString(2, "sun1f");
+              st.setString(3, "123123");
+              st.setString(4, "sun1f@foxmail.com");
+              // sql.Date      数据库的日期       java.sql.Date()
+              // util.Date     Java的日期        new Date().getTime()获得时间戳
+              st.setDate(5, new java.sql.Date(new Date().getTime()));
+  
+              // 执行
+              int num = st.executeUpdate();
+              if(num > 0) {
+                  System.out.println("插入成功！");
+              }
+          } catch (SQLException e) {
+              throw new RuntimeException(e);
+          } finally {
+              jdbcUtils.release(conn, st, null);
+          }
+      }
+  }
+  ```
+
+- 删
+
+  ```java
+  package com.sun1f.lesson3;
+  
+  import com.sun1f.utils.jdbcUtils;
+  
+  import java.sql.Connection;
+  import java.sql.PreparedStatement;
+  import java.sql.SQLException;
+  
+  public class TestDelete {
+      public static void main(String[] args) {
+          Connection conn = null;
+          PreparedStatement st = null;
+  
+          try {
+              conn = jdbcUtils.getConnection();
+  
+              // 和 Statement的区别
+              // 1. 使用 ? 占位符代替参数
+              String sql = "delete from users where `id` = ?";
+  
+              // 2. 预编译SQL：先不执行SQL
+              st = conn.prepareStatement(sql);
+  
+              // 3. 手动给参数赋值，set函数第一个参数表示第几个括号，第二个参数为赋值的内容
+              st.setInt(1, 4);
+  
+              // 执行
+              int num = st.executeUpdate();
+              if(num > 0) {
+                  System.out.println("删除成功！");
+              }
+          } catch (SQLException e) {
+              throw new RuntimeException(e);
+          } finally {
+              jdbcUtils.release(conn, st, null);
+          }
+      }
+  }
+  ```
+
+- 改
+
+  ```java
+  package com.sun1f.lesson3;
+  
+  import com.sun1f.utils.jdbcUtils;
+  
+  import java.sql.Connection;
+  import java.sql.PreparedStatement;
+  import java.sql.SQLException;
+  import java.util.Date;
+  
+  public class TestUpdate {
+      public static void main(String[] args) {
+          Connection conn = null;
+          PreparedStatement st = null;
+  
+          try {
+              conn = jdbcUtils.getConnection();
+  
+              // 和 Statement的区别
+              // 1. 使用 ? 占位符代替参数
+              String sql = "update `users` set `name` = ? where `id` = ?";
+  
+              // 2. 预编译SQL：先不执行SQL
+              st = conn.prepareStatement(sql);
+  
+              // 3. 手动给参数赋值，set函数第一个参数表示第几个括号，第二个参数为赋值的内容
+              st.setString(1, "sun2f");
+              st.setInt(2, 4);
+  
+              // 执行
+              int num = st.executeUpdate();
+              if(num > 0) {
+                  System.out.println("更新成功！");
+              }
+          } catch (SQLException e) {
+              throw new RuntimeException(e);
+          } finally {
+              jdbcUtils.release(conn, st, null);
+          }
+      }
+  }
+  ```
+
+- 查
+
+  ```java
+  package com.sun1f.lesson3;
+  
+  import java.sql.Connection;
+  import java.sql.PreparedStatement;
+  import java.sql.ResultSet;
+  import java.sql.SQLException;
+  
+  import com.sun1f.utils.*;
+  
+  public class TestSelect {
+      public static void main(String[] args) {
+          Connection conn = null;
+          PreparedStatement st = null;
+          ResultSet rs = null;
+  
+          try {
+              conn = jdbcUtils.getConnection();
+              String sql = "select `password` from `users` where `id` = ?";
+  
+              st = conn.prepareStatement(sql);
+              st.setInt(1, 4);
+  
+              rs = st.executeQuery();
+  
+              while(rs.next()) {
+                  System.out.println("password: " + rs.getString("password"));
+              }
+  
+  
+          } catch (SQLException e) {
+              throw new RuntimeException(e);
+          } finally {
+              jdbcUtils.release(conn, st, rs);
+          }
+      }
+  }
+  ```
+
+- 测试SQL注入
+
+  ```java
+  package com.sun1f.lesson3;
+  
+  import java.sql.Connection;
+  import java.sql.PreparedStatement;
+  import java.sql.ResultSet;
+  import java.sql.SQLException;
+  
+  import com.sun1f.utils.*;
+  
+  public class SQL_injection {
+      public static void main(String[] args) {
+          // login("sun1f", "123123"); // 可以查出来
+          login("'' or 1 = 1", "123123"); // 查不出来
+      }
+  
+      public static void login(String username, String password) {
+          Connection conn = null;
+          PreparedStatement st = null;
+          ResultSet rs = null;
+  
+          try {
+              conn = jdbcUtils.getConnection();
+  
+              // PreparedStatement 防止SQL注入的本质，是把传递进来的参数当做字符
+              // 假设其中存在转义字符，比如 ' 会被直接转义
+              String sql = "select * from users where `name` = ? and `password` = ?";
+              st = conn.prepareStatement(sql);
+  
+              st.setString(1, username);
+              st.setString(2, password);
+  
+              rs = st.executeQuery();
+  
+              while(rs.next()) {
+                  System.out.println(rs.getString("name"));
+                  System.out.println(rs.getString("password"));
+              }
+  
+          } catch (SQLException e) {
+              throw new RuntimeException(e);
+          } finally {
+              jdbcUtils.release(conn, st, rs);
+          }
+      }
+  }
+  ```
+
+###  10.6 IDEA连接数据库
+
+
+
+### 10.7 事务
+
+ACID原则
+
+**注意事项：**
+
+- 开启事务：`conn.setAutoCommit(false);`
+- 一组业务执行完毕，提交事务
+- 可以在catch语句中显示定义回滚语句，但没有必要，因为默认失败就会回滚
+
+```java
+package com.sun1f.lesson4;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import com.sun1f.utils.*;
+
+public class TestTransaction2 {
+    public static void main(String[] args) {
+        Connection conn = null;
+        PreparedStatement st = null;
+        ResultSet rs = null;
+
+        try {
+            conn = jdbcUtils.getConnection();
+
+            // 关闭数据库的自动提交，自动会开启事务（无需手动）
+            conn.setAutoCommit(false);
+
+            String sql1 = "update account set money = money - 100 where `name` = 'A'";
+            st = conn.prepareStatement(sql1);
+            st.executeUpdate();
+
+            // 报错后，之前执行的也会回滚至原来
+            int i = 1 / 0;
+
+            String sql2 = "update account set money = money + 100 where `name` = 'B'";
+            st = conn.prepareStatement(sql2);
+            st.executeUpdate();
+
+            // 业务完毕，提交事务
+            conn.commit();
+            System.out.println("事务执行成功");
+
+        } catch (SQLException e) {
+            try {
+                // 不需要手动写回滚
+                conn.rollback();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+            throw new RuntimeException(e);
+        } finally {
+            jdbcUtils.release(conn, st, rs);
+        }
+    }
+}
+```
+
+### 10.8 数据库连接池
+
+DBCP、C3P0、Druid等开源数据源实现
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
