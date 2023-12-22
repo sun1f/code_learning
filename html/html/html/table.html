@@ -1,10 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <title>表格</title>
 </head>
 <body>
-$END$
+
+<!--表格
+tr（table.row）:行
+td（table.data cell）：列
+border：设置边框
+colspan：跨列
+rowspan：跨行
+-->
+
+<table border="1px">
+    <tr>
+        <td colspan="4">1-1</td>
+    </tr>
+    <tr>
+        <td rowspan="2">2-1</td>
+        <td>2-2</td>
+        <td>2-3</td>
+        <td>2-4</td>
+    </tr>
+    <tr>
+        <td>3-1</td>
+        <td>3-2</td>
+        <td>3-3</td>
+    </tr>
+</table>
+<hr>
+<!--练习：在网页上显示成绩单-->
+
+<table border="3px">
+    <tr>
+        <td colspan="3">学生成绩</td>
+    </tr>
+    <tr>
+        <td rowspan="2">狂神</td>
+        <td>语文</td>
+        <td>100</td>
+    </tr>
+    <tr>
+        <td>数学</td>
+        <td>100</td>
+    </tr>
+    <tr>
+        <td rowspan="2">秦疆</td>
+        <td>语文</td>
+        <td>100</td>
+    </tr>
+    <tr>
+        <td>数学</td>
+        <td>100</td>
+    </tr>
+</table>
+
+
+
 </body>
 </html>

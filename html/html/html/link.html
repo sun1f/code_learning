@@ -1,10 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <title>链接标签</title>
 </head>
 <body>
-$END$
+
+<!--使用name作为标记-->
+<a name="top">顶部</a>
+<br>
+<!--链接标签：a
+href（必填）：要跳转到的页面
+target：表示窗口在哪里打开
+-->
+<a href="image.html">点击跳转到image页面</a>
+<br>
+<a href="https://www.baidu.com">点击跳转到百度页面</a>
+<br>
+
+<!--链接标签中可以插入图片-->
+<a href="my_first_html.html">
+    <img src="../resources/image/微信图片_20230103115627.jpg" alt="显示文字", title="悬停文字", width="400", height="400">
+</a>
+<br>
+<!--测试target
+_blank：在新的标签页中打开
+_self（默认）：在自己的网页中打开
+-->
+<a href="image.html" target="_blank">测试target->_blank</a>
+<br>
+<a href="image.html" target="_blank">测试target->_self</a>
+
+<p>
+    <a href="my_first_html.html">
+        <img src="../resources/image/微信图片_20230103115627.jpg" alt="显示文字", title="悬停文字", width="400", height="400">
+    </a>
+</p>
+
+
+<!--锚链接
+
+-->
+<a href="#top">回到顶部</a>
+<br>
+<a name="down">底部</a>
+
+<br>
+<!--功能性链接
+邮件链接：mailto:
+QQ链接：QQ推广
+-->
+<a href="mailto:sun1f@foxmail.com">通过邮箱联系我</a>
+<br>
+<a href=""></a>
+
 </body>
 </html>
