@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>表单（登录注册）</title>
+</head>
+<body>
+
+<h1>注册</h1>
+
+<!--表单form
+action：表单提交的位置，可以是网站，也可以是一个请求处理地址
+method：psot，get提交方式
+    get方式提交：可以在url中看到提交的信息，不安全，但是高效，不可以传输大文件
+    post方式提交：不可以在url中看到提交的信息，比较安全，可以传输大文件
+
+    value：初始默认值
+    maxlength：最长能写几个字符
+    size：文本框长度
+    required：不填写该字段无法提交
+    readonly：只读字段，无法修改
+    hidden：隐藏域
+    placeholder：用于所有的输入框中，为提示信息
+-->
+
+<form action="my_first_html.html" method="get">
+    <p>名字：<input type="text" name="username" id="username" placeholder="请输入用户名" maxlength="8" size="30"></p>
+
+<!--    密码框：input type="password"，输入密码时不显示-->
+    <p>密码：<input type="password" name="password" id="password" value="123456" hidden required></p>
+
+<!--    单选框标签：
+input type = radio
+value：单选框的值
+name：表示组，name相同时只能在该组内单选，不同时可以随便选多个
+checked：表示默认选中的
+disabled：禁用，无法被选中
+-->
+    <p>性别：
+        <input type="radio" name="sex" id="boy" value="boy" checked>男
+        <input type="radio" name="sex" id="girl" value="girl">女
+        <input type="radio" name="sex" id="half_half" value="half_half" disabled>半男不女
+    </p>
+
+
+<!--    多选框
+input type = checkbox
+checked表示默认选中的
+-->
+    <p>爱好：
+        <input type="checkbox" value="sleep" name="hobby">睡觉</input>
+        <input type="checkbox" name="coding" name="hobby" checked>敲代码
+        <input type="checkbox" name="chat" name="hobby">聊天
+        <input type="checkbox" name="game" name="hobby">游戏
+    </p>
+
+<!--    按钮是图片image时，点击图片会直接提交
+input type = button：普通按钮
+input type = image：图像按钮
+input type = submit：提交按钮
+input type = reset：重置按钮
+-->
+    <p>按钮：
+        <input type="button" name="btn1" value="点击变长">
+        <input type="image" src="../resources/image/city.jpg" width="720" height="480">
+    </p>
+
+<!--    下拉框
+selected表示默认选中的
+-->
+    <p>国家：
+        <select name="列表名称">
+            <option value="China">中国</option>
+            <option value="USA" selected>美国</option>
+            <option value="SWISS">瑞士</option>
+            <option value="Japan">日本</option>
+        </select>
+    </p>
+
+<!--    文本域-->
+    <p>反馈：
+        <textarea name="textarea" cols="50" rows="10">文本内容</textarea>
+    </p>
+
+<!--    文件域-->
+    <p>文件域：
+        <input type="file" name="files">
+        <input type="button" value="上传" name="upload">
+    </p>
+
+<!--    邮箱验证-->
+    <p>邮箱：
+        <input type="email" name="email">
+    </p>
+
+<!--    URL-->
+    <p>URL:
+        <input type="url" name="url">
+    </p>
+
+<!--    数字-->
+    <p>商品数量：
+        <input type="number" name="num" max="100" min="0" step="1">
+    </p>
+
+<!--    滑块-->
+    <p>音量滑块：
+        <input type="range" name="voice" min="0" max="100" step="2" value="10">
+    </p>
+
+<!--    搜索框-->
+    <p>搜索：
+        <input type="search" name="search">
+    </p>
+
+<!--增强鼠标可用性
+点击label，可以跳转到id位置
+-->
+    <p>
+        <label for="mark">点我</label>
+        <input type="text" name="mark" id="mark">
+    </p>
+
+<!--    pattern：正则表达式验证-->
+    <p>自定义邮箱：
+        <input type="email" name="diy_email" pattern="^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$" required>
+    </p>
+    
+    <p>
+        <input type="submit" name="submit">
+        <input type="reset" name="reset" value="重置表单">
+    </p>
+
+</form>
+
+
+</body>
+</html>

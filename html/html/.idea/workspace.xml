@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="a68bf7fa-1107-4f9c-8a3c-8b561c8aae12" name="更改" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/html.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/html/form.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/html/iframe.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/html/image.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/html/label.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/html/link.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/html/list.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/html/media.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/html/my_first_html.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/html/page_structure.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/html/table.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/audio/hbd.mp3" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/image/aleksas-stan-WWYtoHmrOQw-unsplash.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/image/green.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/image/微信图片_20230103115627.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/image/微信图片_20230203133955.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/video/snow.mp4" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../java/Hello/src/com/test/Demo1.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../java/Hello/src/com/test/Demo1.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../java/Hello/src/com/test/Demo2.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../java/Hello/src/com/test/Demo2.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../javascript/app.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../javascript/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../matlab_exercise/p2.m" beforeDir="false" afterPath="$PROJECT_DIR$/../../matlab_exercise/p2.m" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="HTML File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 1
+}</component>
+  <component name="ProjectId" id="2ZfDdg4r9eLxs8yvQSkRR0s6TXN" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "last_opened_file_path": "F:/yaner/programming/learning/frontend/html",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "settings.editor.selected.configurable": "reference.settings.ide.settings.web.browsers",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="F:\yaner\programming\learning\html\html\resources\video" />
+      <recent name="F:\yaner\programming\learning\html\html\resources\audio" />
+      <recent name="F:\yaner\programming\learning\html\html\resources\image" />
+    </key>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="应用程序级" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="a68bf7fa-1107-4f9c-8a3c-8b561c8aae12" name="更改" comment="" />
+      <created>1702804329022</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1702804329022</updated>
+      <workItem from="1702804330031" duration="1948000" />
+      <workItem from="1702887948259" duration="11129000" />
+      <workItem from="1702959986563" duration="1200000" />
+      <workItem from="1703232189107" duration="1780000" />
+      <workItem from="1703337223635" duration="1012000" />
+      <workItem from="1703421223547" duration="7346000" />
+      <workItem from="1703473099460" duration="3021000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>
