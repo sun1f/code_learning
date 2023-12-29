@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <style>
+        .demo a {
+            float: left;
+            display: block;
+            height: 50px;
+            width: 50px;
+            border-radius: 10px; /*圆角边框*/
+            background: cadetblue;
+            text-align: center;
+            color: darkgreen;
+            text-decoration: none; /*去掉下划线*/
+            margin-right: 6px;
+            font: bold 20px/50px Arial;
+        }
+
+        /*选中存在id属性的a标签*/
+        a[id] {
+            background: #ee9a52;
+        }
+        /*选中id=first的a标签，中括号[]里面可以用正则表达式*/
+        a[id = first] {
+            background: #ee3ca9;
+        }
+        /*选中class=links的a标签，其中"="表示等于，"*="表示包含此元素*/
+        a[class *= "links"] {
+            background: grey;
+        }
+
+        /*选中herf中以https开头的a标签。其中，"^="表示以此元素开头*/
+        a[href ^= "https"] {
+            background: #ee2914;
+        }
+        /*选中herf中以pdf结尾的a标签。其中，"$="表示以此元素结尾*/
+        a[href $= "pdf"] {
+            background: bisque;
+        }
+
+    </style>
+
+</head>
+<body>
+
+    <p class="demo">
+        <a href="https://www.baidu.com" class="links item first" id="first">1</a>
+        <a href="" class="links item active" target="_blank" title="test">2</a>
+        <a href="images/123.html" class="links item">3</a>
+        <a href="images/123.png" class="links item">4</a>
+        <a href="images/123.jpg" class="links item">5</a>
+        <a href="abc" class="links item">6</a>
+        <a href="/a.pdf" class="links item">7</a>
+        <a href="/abd.pdf" class="links item">8</a>
+        <a href="/abd.doc" class="links item">9</a>
+        <a href="/abcd.docx" class="links item last">10</a>
+
+    </p>
+
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <!--内部样式-->
+    <style>
+        h1 {
+            color: green;
+        }
+    </style>
+
+    <!--外部样式1-->
+    <style>
+        @import url("css/style.css");
+    </style>
+
+    <!--外部样式2-->
+    <link rel="stylesheet" href="css/style.css">
+
+
+</head>
+<body>
+
+<!--优先级：就近原则-->
+<!--行内样式：在标签元素中，编写一个style属性，编写样式即可-->
+<h1 style="color: red">这是标题一</h1>
+
+</body>
+</html>

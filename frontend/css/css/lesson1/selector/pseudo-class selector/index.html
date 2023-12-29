@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+  <!--不使用class和id选择器-->
+  <style>
+    /*选中ul的第一个元素*/
+    ul li:first-child {
+      background: #3f59ee;
+    }
+    /*选中ul的最后一个元素*/
+    ul li:last-child {
+      background: #ee9a52;
+    }
+
+    p:nth-child(2) {
+      background: #ee3ca9;
+    }
+    p:nth-of-type(1) {
+      background: #1dddee;
+    }
+
+    a:hover {
+      background: grey;
+    }
+
+  </style>
+
+</head>
+<body>
+
+  <a href="https://www.baidu.com">baidu</a>
+  <p>p1</p>
+  <p>p2</p>
+  <p>p3</p>
+  <ul>
+    <li>li1</li>
+    <li>li2</li>
+    <li>li3</li>
+  </ul>
+
+</body>
+</html>
